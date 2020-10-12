@@ -1,3 +1,4 @@
 .vscode/settings.json
 env-sui/
 dicewars-master/scripts/utils.py
+dicewars-master/debug.save

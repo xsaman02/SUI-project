@@ -5,8 +5,6 @@ import tempfile
 import numpy as np
 import random
 
-sys.path.insert(0, "./")
-sys.path.insert(0, "./dicewars")
 from dicewars.server.summary import GameSummary
 
 
