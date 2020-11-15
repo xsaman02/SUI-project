@@ -7,7 +7,7 @@ from dicewars.ai.utils import possible_attacks, probability_of_successful_attack
 
 class AI:
     def __init__(self, player_name, board, players_order):
-        print("hello")
+        print("hello world") 
         self.player_name = player_name
         self.logger = logging.getLogger('AI')
 
