@@ -16,10 +16,8 @@ class AI:
         attacks = list(possible_attacks(board, self.player_name))
 
         for source, target in attacks:
-            print(type(source))
-            break
-            # prob = probability_of_successful_attack(board, source.get_name(), target.get_name())
-            # if prob > 0.6:
-            #     return BattleCommand(source.get_name(), target.get_name())
+            prob = probability_of_successful_attack(board, source.get_name(), target.get_name())
+            if prob > 0.6:
+                return BattleCommand(source.get_name(), target.get_name())
 
         return EndTurnCommand()
