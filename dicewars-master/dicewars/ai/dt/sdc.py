@@ -22,6 +22,8 @@ class AI:
         """
         self.player_name = player_name
         self.logger = logging.getLogger('AI')
+        print(len(board.areas))
+
 
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
         """AI agent's turn
