@@ -1,6 +1,7 @@
 import copy
 import numpy as np
 from dicewars.ai.utils import possible_attacks, probability_of_successful_attack
+from dicewars.ai.sui_ai.UCS.Attack_struct import Attack
 
 
 class UCS():
@@ -117,6 +118,16 @@ class UCS():
 			Board: saved board
 		"""
 		return self.boardcopy
+
+	def evaluate_all_paths_from(self, attacker, board, depth, cur_depth):
+		attacks = []
+		enemies = self.get_enemies_of(attacker, board)
+		for target in enemies:
+			res = self.evaluate_attack(attacker, target, board)
+			attacks.append(Attack([attacker, target], res))
+
+		return attacks, len(enemies)
+
 
 	def evaluate_all_attacks_on(self, target, board, attacks):
 		"""Evaluate all possible attacks on target from board's areas

@@ -84,11 +84,8 @@ class KNN():
 		print("datapoints len:", len(datapoints))
 		classes = np.array([self.__get_class_of_datapoint(dp) for dp in datapoints])
 
-		pos = (classes == 1).sum()
-		neg = (classes == 0).sum()
-		if pos + neg == 0:
-			return None
-		return pos / (pos + neg)
+		pos = sum(classes)
+		return pos / len(classes)
 
 	def set_new_datapoint(self, data, y) -> None:
 		"""	Function adds new data (vector of features) to the dataset and marked it by class y (0, 1)
@@ -209,15 +206,11 @@ class KNN():
 
 	def __get_class_of_datapoint(self, dp) -> bool:
 		"""	Function returns class of given datapoint\n
-			If class is not known, returns None
+			class can by 0, 0.5, 1
 		"""
 		print("got in __get_class_of_datapoint")
 		dp = hash(bytes(dp))
-		if dp in self.hashtable:
-			if dp == hash(bytes(np.array([0.5, 0.5, 0.5, 0.5]))):
-				print("res: ", self.hashtable[dp])
-			return self.hashtable[dp]
-		return None
+		return self.hashtable[dp]
 
 	def __normalize(self, v):
 		"""Normalize given numpy vector by setup min_max intervals

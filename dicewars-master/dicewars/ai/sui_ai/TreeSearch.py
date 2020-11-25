@@ -1,7 +1,7 @@
 from typing import Iterator
-import numpy as np
 from dicewars.ai.utils import possible_attacks
 from dicewars.ai.sui_ai.TreeNode import TreeNode
+import numpy as np
 
 class TreeSearch():
 	"""
@@ -13,7 +13,7 @@ class TreeSearch():
 		self.paths = None
 
 
-	def evaluate_possible_paths(self, board, player_name, immersion) -> list(int):
+	def evaluate_possible_paths(self, board, player_name, max_depth) -> Iterator[int]:
 		"""Evaluate possible attacking paths to n level from all provinces and returns list of integers
 		   of possible attacks from different provinces
 
@@ -21,7 +21,7 @@ class TreeSearch():
 		-----------
 			board (Board): Board of the game
 			player_name (int): Player's name
-			immersion (int): recursion number to expand in search tree
+			depth (int): recursion number to expand in search tree
 
 		Returns:
 		--------
@@ -33,8 +33,26 @@ class TreeSearch():
 		self.paths = [TreeNode(x, player_name) for x in attackers]
 		n_attacks = []
 		for attacker in self.paths:
-			n_attacks.append(attacker.expand_to_n_level(immersion))
+			n_attacks.append(attacker.expand_to_n_level(max_depth, attacker.attacker.get_dice(), board))
 		return n_attacks
+
+
+	def get_paths_of(self, i, max_recur_depth) -> list():
+		""" Returns attack paths of selected province
+
+		Parameters:
+		-----------
+			i (int): index of province
+			max-recur-depth (int): maximum recursion depth
+
+		Returns:
+		--------
+			np.array: 2D np.array()
+		"""
+		if type(self.paths) == type(None):
+			print("get_paths_of paths not set")
+
+		return np.asarray(self.paths[i].get_paths_to_n_level(max_recur_depth))		
 
 
 	def get_paths_to_n_level(self, n) -> list():
@@ -54,11 +72,11 @@ class TreeSearch():
 		--------
 			3D array
 		"""
-		assert(type(self.paths) != type(None))
+		if type(self.paths) == type(None):
+			print("get_paths_to_n_level paths not set")
 
 		provinces_paths = []
 		for path in self.paths:
 			provinces_paths.append(path.get_paths_to_n_level(n))			
 
 		return provinces_paths
-

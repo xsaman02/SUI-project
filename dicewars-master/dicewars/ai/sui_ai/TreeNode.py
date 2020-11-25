@@ -13,28 +13,29 @@ class TreeNode():
 		self.player_name = player_name
 		self.possible_attacks = []
 
-	def expand_to_n_level(self, n):
+	def expand_to_n_level(self, n, dices, board, visited=[]):
 		""" expand possible attacks to n level
 
 		Args:
-			lvl (int): level of immersion to expand in search tree
+			lvl (int): maximum level of immersion to expand in search tree
 
 		Returns:
 			[int]: number of all attacks
 		"""
-		if n == 0:
+		n_attacks = 0
+		if n == 0 or dices <= 1 :
 			return 0
-
-		neigbours = self.attacker.get_adjacent_areas()
-		for n in neigbours:
-			if n.get_owner_name() != self.player_name or n.get_name() == self.attacker.get_name():
+		neigbours = [board.get_area(x) for x in self.attacker.get_adjacent_areas()]
+		for neig in neigbours:
+			if neig.get_owner_name() == self.player_name or neig in visited:
 				continue
 			else:
-				self.possible_attacks.append(TreeNode(n, self.player_name))
+				self.possible_attacks.append(TreeNode(neig, self.player_name))
+				n_attacks += 1
 		
-		n_attacks = 0
 		for subnode in self.possible_attacks:
-			n_attacks += subnode.unpack_to_n_level(n - 1)
+			n_attacks += subnode.expand_to_n_level(n - 1, dices-1, board, visited + [self.attacker])
+
 		return n_attacks
 	
 	def get_paths_to_n_level(self, n, paths=[], cur_path=[]):
