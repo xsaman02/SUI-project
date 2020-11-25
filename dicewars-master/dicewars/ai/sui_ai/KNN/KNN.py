@@ -1,107 +1,39 @@
+from os import write
+from typing import Iterator, List
 import numpy as np
-import json, math
+import json, math, csv
+from hashlib import sha1
 
-
-def plot(dps, cs):
-	plt.figure()
-	# dps = knn.dataset
-	# cs = [knn.get_class_of_datapoint(dp) for dp in dps]
-
-	pos_dps, neg_dps, undec_dps = [], [], []
-	for d, c in zip(dps, cs):
-		if c:
-			pos_dps.append(d)
-		elif c == False:
-			neg_dps.append(d)
-		else:
-			undec_dps.append(d)
-
-	pos_dps = np.asarray(pos_dps).transpose()
-	neg_dps = np.asarray(neg_dps).transpose()
-	undec_dps = np.asarray(undec_dps).transpose()
-	show = False
-	if len(pos_dps) != 0:
-		plt.scatter(pos_dps[0], pos_dps[1], color="green")
-		show = True
-
-	if len(neg_dps) != 0:
-		plt.scatter(neg_dps[0], neg_dps[1], color="orange")
-		show = True		
-
-	if len(undec_dps) != 0:
-		plt.scatter(undec_dps[0], undec_dps[1], color="gray")
-		show = True	
-
-	if show:
-		plt.show()
-	
 
 
 class KNN():
 	
-	dataset_addr = "./datapoints.save"
-	hashtable_addr = "./hashtable.save.json"
+	dataset_addr = "./dicewars/ai/sui_ai/KNN/datapoints"
+	hashtable_addr = "./dicewars/ai/sui_ai/KNN/hashtable"
+	dataset_index = 0
 	dataset = np.asarray([])
-	deviation = 0.0
+	deviation = 0.1
 	hashtable = {}
 	
-	def __init__(self, k : int) -> None:
+	def __init__(self, k : int, min_max : Iterator[List[float]]) -> None:
 		"""Init function\n
 	    Parameters:
     	----------
 		k (int): k sets number of nearest searching datapoints
+		min_max ([ [float | int, float | int] ]) : minimum and maximum values of features in datapoint
 		"""
 		self.k = k
+		self.min_max = min_max
 
 
-	def initialize(self, params : dict, n_data : int) -> None:
+	def initialize(self, n_data, len_of_vector : int) -> None:
 		"""		Function initialize new dataset via Monte Carlo.\n		
 	    Parameters:
     	----------
-		params (dict): key = name of feature, value = array (min_val, max_val)
 		ndata (int): number of generated datapoints
 		"""
-		self.dataset = np.random.rand(n_data, len(params.keys()))
-		self.min_max = list(params.values())
-		
-	def first_mapping(self, pos_datapoint, neg_datapoint, undecided=None) -> None:
-		"""	This function is called after new inicialization.\n
-		Starts mapping new datapoints from dataset to classes based on given datapoints.\n\n
-		Given points will be included in dataset.\n
-		Classes of datapoint will be hashed for later quicker search
-
-		Parameters:
-		-----------
-			pos-datapoint (np.array): positive datapoint
-			neg-datapoint (np.array): negative datapoint
-			undecided (np.array): help parameter for recursive evaluation
-		"""
-		assert(type(self.min_max) != type(None))
-		threshold = 0.5
-
-		if type(undecided) == type(None):
-			self.set_new_data(pos_datapoint, True)
-			self.set_new_data(neg_datapoint, False)
-			dataset = self.dataset
-		else:
-			dataset = undecided
-		
-		undecided = np.array([])
-		for dp in dataset:
-			if dp.data.tobytes not in self.hashtable:
-				r = self.__evaluate(dp)
-				if r == None:
-					undecided = np.array([dp]) if undecided.size == 0 else np.append(undecided, [dp], axis=0)
-				else:
-					self.hashtable[dp.data.tobytes] = r > threshold
-		if undecided.size == 0:
-			print(len([x for x in self.hashtable.values() if x == True]))
-			print(len([x for x in self.hashtable.values() if x == False]))
-			return
-		else:
-			print("undecided", undecided.shape[0])
-			plot(self.dataset, [self.__get_class_of_datapoint(dp) for dp in self.dataset])
-			self.first_mapping(None, None, undecided)
+		self.dataset = np.random.rand(n_data, len_of_vector)
+		self.hashtable = {hash(bytes(data)) : 1 for data in self.dataset}
 
 	def set_min_max_vals(self, min_max : list) -> None:
 		"""setting intervals for input data, which is used for normalization
@@ -115,10 +47,21 @@ class KNN():
 	def load_dataset(self) -> None:
 		"""Function load dataset and hashtable from hardcoded addreses
 		"""
-		self.dataset = np.loadtxt(self.dataset_addr)
-		with open(self.hashtable_addr, "r+") as fd:
-			self.hashtable = json.load(fd)
-		return self.dataset
+		print("loading dataset")
+		self.dataset = np.loadtxt(f'{self.dataset_addr}{self.dataset_index}.save')
+		print("dps loaded")
+		with open(f'{self.hashtable_addr}{self.dataset_index}.save.csv', "r+") as fd:
+			reader = csv.reader(fd)
+			self.hashtable = {int(dp_bytes) : int(c) for dp_bytes, c in reader}
+		print("hashtable loaded")
+
+	def save_dataset(self) -> None:
+		"""Saves loaded dataset to hard-coded addr
+		"""
+		np.savetxt(f'{self.dataset_addr}{self.dataset_index}.save', self.dataset)
+		with open(f'{self.hashtable_addr}{self.dataset_index}.save.csv', "w") as fd:
+			writer = csv.writer(fd)
+			writer.writerows(self.hashtable.items())
 
 	def evaluate(self, datapoint):
 		"""		Function evaluate given datapoint (vector of features) on loaded dataset and returns index of recomended attacking (0-1)
@@ -135,51 +78,30 @@ class KNN():
 		----------
 		If dataset and metrics is not set, will raise exception
 		"""
-		assert(self.dataset.size != 0)
-		
+		assert(self.dataset.size > 0)
+
 		datapoints = self.__get_k_neighbors(self.__normalize(datapoint))
-		classes = np.array([self.__get_class_of_datapoint(dp[0]) for dp in datapoints])
-		pos = np.count_nonzero(classes == True)
-		neg = np.count_nonzero(classes == False)
+		print("datapoints len:", len(datapoints))
+		classes = np.array([self.__get_class_of_datapoint(dp) for dp in datapoints])
+
+		pos = (classes == 1).sum()
+		neg = (classes == 0).sum()
 		if pos + neg == 0:
 			return None
-		return pos / (pos+neg)
+		return pos / (pos + neg)
 
-
-	def __evaluate(self, datapoint):
-		"""help function for evaluation od data, that has been already normalized
-
-		Parameters:
-		-----------
-			datapoint (np.array()): datapoint (vector of features)
-
-		Returns:
-		--------
-			float: index of recommended attack
-		"""
-		assert(self.dataset.size != 0)
-		
-		datapoints = self.__get_k_neighbors(datapoint)
-		classes = np.array([self.__get_class_of_datapoint(dp[0]) for dp in datapoints])
-		pos = np.count_nonzero(classes == True)
-		neg = np.count_nonzero(classes == False)
-		if pos + neg == 0:
-			return None
-		return pos / (pos+neg)
-
-
-	def set_new_data(self, data, y : bool) -> None:
+	def set_new_datapoint(self, data, y) -> None:
 		"""	Function adds new data (vector of features) to the dataset and marked it by class y (0, 1)
 
 		Parameters:
 		-----------
 			data (numpy.array): vector of features
-			y (bool): class
+			y (bool | int): class
 		"""
 		assert(self.dataset.size != 0)
 		data = self.__normalize(data)
 		self.dataset = np.append(self.dataset, [data], axis=0)
-		self.hashtable[data.data.tobytes()] = y
+		self.hashtable[hash(bytes(data))] = int(y)
 
 
 	def set_deviation(self, deviation) -> None:
@@ -203,13 +125,6 @@ class KNN():
 		"""
 		self.deviation = deviation
 
-	def save_dataset(self) -> None:
-		"""Saves loaded dataset to hard-coded addr
-		"""
-		np.savetxt(self.dataset_addr, self.dataset)
-		with open(self.hashtable_addr, "w") as fd:
-			json.dump(self.hashtable, fd)
-
 	def __compute_euclid_dist(self, a, b) -> float:
 		"""		Function takes vectors of two datapoints and compute euclid distance between them\n
 		parameters: a, b both needs to be numpy arrays\n
@@ -224,7 +139,7 @@ class KNN():
 		"""
 		return np.linalg.norm(b-a)
 
-	def __get_k_neighbors(self, datapoint, deviation=None, selected_datapoints=np.array([]), last_deviation=None, recur_count=0) -> np.ndarray:
+	def __get_k_neighbors(self, datapoint, deviation=None, selected_datapoints=np.array([]), last_deviation=None, recur_count=0, max_recur_count=4) -> np.ndarray:
 		"""Get k nearest neighbors from given datapoint
 
 		Parameters:
@@ -238,9 +153,6 @@ class KNN():
 			np.ndarray: Returns K nearest neighbors
 		"""
 		
-
-		assert(self.deviation > 0)
-
 		if deviation == None:
 			deviation = self.deviation
 
@@ -264,11 +176,11 @@ class KNN():
 			v_s = self.dataset[i]
 
 
-		datapoints = np.array([v for v in v_b if v in v_s and v.data.tobytes() in self.hashtable])
+		datapoints = np.array([v for v in v_b if v in v_s])
 
 
-		if self.k <= len(datapoints) or recur_count >= 2:
-			if len(datapoints) <= 2*self.k or recur_count >= 2:
+		if self.k <= len(datapoints) or recur_count >= max_recur_count:
+			if len(datapoints) <= 2*self.k or recur_count >= max_recur_count:
 				if len(datapoints) <= self.k:
 					return datapoints
 				distances = []
@@ -299,13 +211,11 @@ class KNN():
 		"""	Function returns class of given datapoint\n
 			If class is not known, returns None
 		"""
-		# show = False
-		# if list(dp) == [0.8, 0.75]:
-		# 	show = True
-		dp = dp.data.tobytes()
+		print("got in __get_class_of_datapoint")
+		dp = hash(bytes(dp))
 		if dp in self.hashtable:
-			# if show:
-			# 	print("positive dp "+dp+" class: ",self.hashtable[dp])
+			if dp == hash(bytes(np.array([0.5, 0.5, 0.5, 0.5]))):
+				print("res: ", self.hashtable[dp])
 			return self.hashtable[dp]
 		return None
 
@@ -321,6 +231,7 @@ class KNN():
 			numpy.array(): normalized vector
 		"""
 
+		print("got in __normalize")
 		assert(type(self.min_max) != type(None))
 		assert(len(self.min_max) == len(v))
 
@@ -328,19 +239,41 @@ class KNN():
 			v[i] = (v[i] - self.min_max[i][0]) / (self.min_max[i][1] - self.min_max[i][0])
 		return np.array(v)
 
+	def get_len_of_dataset(self) -> int:
+		return self.dataset.shape[0]
+
+	def create_new_dataset(self) -> None:
+		self.save_dataset()
+		self.dataset_index += 1
+		self.initialize(100, len(self.min_max))
 
 
 
-import time
-import matplotlib.pyplot as plt
 if __name__ == "__main__":
-	knn = KNN(3)
-	d = {"probability of capture" : [0, 10], "probability of sustain" : [0,1]}
-	knn.initialize(d, 10)
-	knn.set_deviation(0.1)
-	pos = np.array([8, 0.75])
-	neg = np.array([1, 0.2])
-	print("starts mapping")
-	knn.first_mapping(pos, neg)
-	print("init completed")
+	import time
+	d = {"probability of capture" : [0, 1], 
+		 "change of biggest region size after attack" : [0,15], 
+		 "mean dice of enemy terrs. of target" : [1, 8], 
+		 "attacker dice" : [1, 8]}
+	knn = KNN(11, list(d.values()))
+	knn.initialize(d, 100)
+	knn.set_new_datapoint(np.array([0.5,7.5,4.5,4.5]), False)
+	knn.save_dataset()
+	knn.load_dataset()
+	knn.set_deviation(0.2)
+	# knn.load_dataset()
+	# knn.set_min_max_vals([d.values()])
+
+	# print(hash(bytes(knn.__normalize(np.array([0.5,33,1,-2])))) in knn.hashtable)
+	# print(hash(bytes(np.array([0.5,33,1,-2]))))
+	# print(knn.hashtable.items())
+
+	start = time.perf_counter()
+	prob = knn.evaluate(np.array([0.6,7.5,3.5,3.5]))
+	stop = time.perf_counter()
+	print(stop-start)
+	print(prob)
+	# print(list(knn.hashtable.keys())[0])
+	# print(knn.hashtable.items())
+
 
