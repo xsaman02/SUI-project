@@ -29,7 +29,7 @@ class UCS():
 			list[Area]: List of enemy areas
 		"""
 		return [board.get_area(a) for a in area.get_adjacent_areas() if board.get_area(a).get_owner_name() != self.player_name]
-
+		
 	def get_regionsize_change_with(self, areas, board) -> int:
 		""" calculate size-change of largest region of player after capturing gicen areas
 
@@ -66,7 +66,7 @@ class UCS():
 		regions = board.get_players_regions(self.player_name)
 		return max([len(r) for r in regions])
 
-	def simulate_attacks(self, attacks, board):
+	def simulate_attacks(self, attacker, target, board):
 		""" Simulate given attacks as succesfull and modify copy of a board
 
 		Parameters:
@@ -78,84 +78,20 @@ class UCS():
 		--------
 			Board: Returns modified copy of the given board
 		"""
-		if self.boardcopy == None:
-			self.boardcopy = copy.deepcopy(board)
 
-		for attacker, target in attacks:
-			attacker = self.boardcopy.get_area(attacker)
-			target = self.boardcopy.get_area(target)
+		attacker = board.get_area(attacker)
+		target = board.get_area(target)
 
-			dices = attacker.get_dice()
-			if dices == 1:
-				continue
+		dices = attacker.get_dice()
+		if dices <= 1:
+			return board
 
-			attacker.dice = 1
-			target.dice = dices - 1
-			target.owner_name = self.player_name
-		
-		return self.boardcopy
+		attacker.dice = 1
+		target.dice = dices - 1
+		target.owner_name = self.player_name
+	
+		return board
 
-
-	def set_boardcopy(self, board):
-		""" Setup copy of the board
-
-		Parameters:
-		-----------
-			board (Board): board to copy
-		"""
-		self.boardcopy = copy.deepcopy(board)
-
-	def clear_boardcopy(self):
-		""" removes modified board
-		"""
-		self.boardcopy = None
-
-	def get_boardcopy(self):
-		"""Getter for modified board
-
-		Returns:
-		--------
-			Board: saved board
-		"""
-		return self.boardcopy
-
-	def evaluate_all_paths_from(self, attacker, board, depth, cur_depth):
-		attacks = []
-		enemies = self.get_enemies_of(attacker, board)
-		for target in enemies:
-			res = self.evaluate_attack(attacker, target, board)
-			attacks.append(Attack([attacker, target], res))
-
-		return attacks, len(enemies)
-
-
-	def evaluate_all_attacks_on(self, target, board, attacks):
-		"""Evaluate all possible attacks on target from board's areas
-			Allows you to enter modified board using 'simulate-attacks' function
-			and simulate multi-level attacks.
-
-		Parameters:
-		-----------
-			target (Area): Target area to attack from
-			board (Board): Playing [modified] board
-			attacks (Iterator[ [Area, Area] ]): possible attacks
-
-		Returns:
-		--------
-			2D list: list where each element is: (attacker-area, evaluation, datapoint)
-		"""
-		print("starting to evaluate")
-		results = []
-		for a, t in attacks:
-			if t == target and a.get_dice() > 1:
-				print("creating datapoint")
-				dp = self.__create_datapoint(a, t, board)
-				print("evaluating")
-				print(dp,type(dp))
-				results.append([a, self.knn.evaluate(dp), dp])
-				print("evaluated: ", results[-1][1])
-
-		return results
 
 	def __create_datapoint(self, attacker, target, board):
 		""" Creates datapoint for KNN evaluation
@@ -172,13 +108,13 @@ class UCS():
 		"""
 		dp = []
 		dp.append(probability_of_successful_attack(board, attacker.get_name(), target.get_name()))
-		print("prob. added")
 		dp.append(self.get_regionsize_change_with(target, board))
-		print("region size added")
-		dp.append(np.array([x.get_dice() for x in self.get_enemies_of(target, board)]).mean())
-		print("mean dice added")
+		enemies = self.get_enemies_of(target, board)
+		if len(enemies) == 0:
+			dp.append(0)
+		else:
+			dp.append(np.array([x.get_dice() for x in enemies]).mean())
 		dp.append(attacker.get_dice())
-		print("dice added")
 
 		return np.asarray(dp)
 
@@ -187,16 +123,17 @@ class UCS():
 
 		Parameters:
 		-----------
-			attacker (Area): Attacking area
-			target (Area): Target area
+			attacker (int): Attacking area name
+			target (int): Target area name
 			board (Board): Playing board
 
 		Returns:
 		--------
 			float: result from KNN classifier
 		"""
+		attacker = board.get_area(attacker)
+		target = board.get_area(target)
 		dp = self.__create_datapoint(attacker, target, board)
-
 		return self.knn.evaluate(dp)
 
 	def propagade_results(self, board, attacks):

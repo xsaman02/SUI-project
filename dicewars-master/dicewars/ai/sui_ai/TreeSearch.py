@@ -1,82 +1,45 @@
-from typing import Iterator
-from dicewars.ai.utils import possible_attacks
 from dicewars.ai.sui_ai.TreeNode import TreeNode
 import numpy as np
+import copy
 
 class TreeSearch():
 	"""
-	Class used for finding best way to attack the enemy provinces
+	Class used for finding ways to attack the enemy provinces
 	"""
-	def __init__(self) -> None:
+	def __init__(self, player_name) -> None:
 		"""Init function
 		"""
-		self.paths = None
+		self.paths = []
+		self.player_name = player_name
+
+	def get_paths(self, area, board):
+		self.paths = []
+		self.expand_node(area.get_dice(), area, board, cur_path=[])
+		return self.paths
 
 
-	def evaluate_possible_paths(self, board, player_name, max_depth) -> Iterator[int]:
-		"""Evaluate possible attacking paths to n level from all provinces and returns list of integers
-		   of possible attacks from different provinces
+	def expand_node(self, max_depth, attacker, board, cur_path = []):
+		# print("cur path after entering expand_node()\n",cur_path)
+		cur_path.append(attacker.get_name())
+		# print("entered expand_node()")
 
-		Parameters:
-		-----------
-			board (Board): Board of the game
-			player_name (int): Player's name
-			depth (int): recursion number to expand in search tree
+		if max_depth <= 1:
+			# print("recursion depth exceeded")
+			self.paths.append(cur_path)
+			# print("paths : ", self.paths)
+			return
 
-		Returns:
-		--------
-			list(int) : number of attacks from different provinces (all possible ways)
-		"""
+		# print("evaluating enemies")
+		possible_attacks = [x for x in attacker.get_adjacent_areas() 
+				   if board.get_area(x).get_owner_name() != self.player_name 
+				   and x not in cur_path]
+		# print("passed evaluating enemies")
 
-		attacks = possible_attacks(board, player_name)
-		attackers = list(set([x[0] for x in attacks]))
-		self.paths = [TreeNode(x, player_name) for x in attackers]
-		n_attacks = []
-		for attacker in self.paths:
-			n_attacks.append(attacker.expand_to_n_level(max_depth, attacker.attacker.get_dice(), board))
-		return n_attacks
+		if len(possible_attacks) <= 0:
+			self.paths.append(cur_path)
+			return
 
-
-	def get_paths_of(self, i, max_recur_depth) -> list():
-		""" Returns attack paths of selected province
-
-		Parameters:
-		-----------
-			i (int): index of province
-			max-recur-depth (int): maximum recursion depth
-
-		Returns:
-		--------
-			np.array: 2D np.array()
-		"""
-		if type(self.paths) == type(None):
-			print("get_paths_of paths not set")
-
-		return np.asarray(self.paths[i].get_paths_to_n_level(max_recur_depth))		
-
-
-	def get_paths_to_n_level(self, n) -> list():
-		""" Using generated tree structure from function evaluate_possible_paths()
-		    Function returns 3D-tuple which represents:
-			1D - list of paths sorted by starting province
-			2D - list of paths from one province
-			3D - list of individual provinces to attack (from own province to last enemy province)
-
-			Arrays doens't need to be same size as some attacks can be possibly shorter
-
-		Parameter:
-		----------
-			n (int): recursion depth to search tree (if tree is not big enough, returns longest way possible)
-
-		Returns:
-		--------
-			3D array
-		"""
-		if type(self.paths) == type(None):
-			print("get_paths_to_n_level paths not set")
-
-		provinces_paths = []
-		for path in self.paths:
-			provinces_paths.append(path.get_paths_to_n_level(n))			
-
-		return provinces_paths
+		# print("starts expanding")
+		for enemy in possible_attacks:
+			self.expand_node(max_depth - 1, board.get_area(enemy), board, copy.deepcopy(cur_path))
+			# print("expanded")
