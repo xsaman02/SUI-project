@@ -24,18 +24,13 @@ class AI:
         knn.save_dataset()
 
         self.ucs = UCS(player_name, knn)
-        # self.simulated_attacks = []
-        # self.last_turn_attacks = []
-        # print("init completed")
+
 
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
         threshold_for_attacking = 0.5
         evaluated_attacks = {}
         tree = TreeSearch(self.player_name)
         start = time.perf_counter()
-        # stop = time.perf_counter()
-        # print(stop-start)
-
 
 
         attacks = possible_attacks(board, self.player_name)
