@@ -1,0 +1,5 @@
+poměry (winrate): AI/template
+	dt.wpm_c: 	5/5
+	rand:  		0/10
+	xlogin42:	2/8
+	dt.ste		3/7

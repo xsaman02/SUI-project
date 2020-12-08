@@ -93,7 +93,7 @@ class UCS():
 		return board
 
 
-	def __create_datapoint(self, attacker, target, board):
+	def create_datapoint(self, attacker, target, board):
 		""" Creates datapoint for KNN evaluation
 
 		Parameters:
@@ -106,6 +106,8 @@ class UCS():
 		--------
 			np.array(): Numpy array of features
 		"""
+		attacker = board.get_area(attacker)
+		target = board.get_area(target)
 		dp = []
 		dp.append(probability_of_successful_attack(board, attacker.get_name(), target.get_name()))
 		dp.append(self.get_regionsize_change_with(target, board))
@@ -114,11 +116,13 @@ class UCS():
 			dp.append(0)
 		else:
 			dp.append(np.array([x.get_dice() for x in enemies]).mean())
-		dp.append(attacker.get_dice())
+		
+		enemies = self.get_enemies_of(attacker, board)
+		dp.append(np.array([x.get_dice() for x in enemies]).mean())
 
 		return np.asarray(dp)
 
-	def evaluate_attack(self, attacker, target, board):
+	def evaluate_attack(self, dp, board):
 		""" Evaluates single attack from attacker to target
 
 		Parameters:
@@ -131,16 +135,21 @@ class UCS():
 		--------
 			float: result from KNN classifier
 		"""
-		attacker = board.get_area(attacker)
-		target = board.get_area(target)
-		dp = self.__create_datapoint(attacker, target, board)
+		# attacker = board.get_area(attacker)
+		# target = board.get_area(target)
 		return self.knn.evaluate(dp)
 
 	def propagade_results(self, board, attacks):
-		if self.knn.get_len_of_dataset() >= self.max_dataset_length:
-			self.knn.create_new_dataset()
+		# if self.knn.get_len_of_dataset() >= self.max_dataset_length:
+		# 	self.knn.create_new_dataset()
 
-		for dp, target in attacks:
-			self.knn.set_new_datapoint(np.asarray(dp), board.get_area(target.get_name()).get_owner_name() == self.player_name)
+		if attacks != {}:
+			for target, value in attacks.items():
+				dp, index = value
+				if index == 0.5 and board.get_area(target).get_owner_name() == self.player_name:
+					index = 1
 
-		self.knn.save_dataset()
+				# print("index = ", index)
+				self.knn.set_new_datapoint(np.asarray(dp), index)
+
+			self.knn.save_dataset()

@@ -1,14 +1,12 @@
-from dicewars.ai.sui_ai.TreeSearch import TreeSearch
-# from dicewars.ai.sui_ai.KNN.KNN import KNN
 import logging, time, copy
 import numpy as np
 
+from dicewars.ai.utils import possible_attacks
 from dicewars.client.ai_driver import BattleCommand, EndTurnCommand
-from dicewars.ai.utils import possible_attacks, probability_of_successful_attack, probability_of_holding_area
-
+from dicewars.ai.sui_ai.TreeSearch import TreeSearch
 from dicewars.ai.sui_ai.KNN.KNN import KNN
 from dicewars.ai.sui_ai.UCS.UCS import UCS
-from numpy import random
+
 
 class AI:
     def __init__(self, player_name, board, players_order):
@@ -18,101 +16,101 @@ class AI:
         d = {"probability of capture" : [0, 1], 
 		     "change of biggest region size after attack" : [0,15], 
 		     "mean dice of enemy terrs. of target" : [0, 8], 
-		     "attacker dice" : [1, 8]}
-        knn = KNN(11, list(d.values()), np.array([1, 1.2, 1.4, 1.5]))
-        knn.initialize(100, len(d.keys()))
-        knn.save_dataset()
-
+		     "mean dice of enemy terrs. of source" : [1, 8]}
+        knn = KNN(11, list(d.values()), np.array([1, 1.2, 1.3, 1.3]))
+        # knn.initialize(10, len(d.keys()))
+        # knn.save_dataset()
+        knn.load_dataset()
         self.ucs = UCS(player_name, knn)
-
+        
+        # {target_id : ((datapoint), value)} 
+        # value is needed because of eventual 0.5 value when attack wa succesfull
+        self.last_turn_attacks = {}
+        # [(datapoint), target_id]
+        self.last_attack = []
+        self.time_start = 0
 
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
-        threshold_for_attacking = 0.5
-        evaluated_attacks = {}
+        lr = 0.1
+        if nb_moves_this_turn == 0:
+            self.time_start = time.perf_counter()
+            self.ucs.propagade_results(board, self.last_turn_attacks)
+            self.evaluate_strategy(board, nb_turns_this_game, time_left, 0.5)
+        elif self.last_attack != []:
+            dp_val = 0.5 if board.get_area(self.last_attack[1]).get_owner_name() == self.player_name else 0
+            self.last_turn_attacks[self.last_attack[1]] = (self.last_attack[0], dp_val)
+            self.last_attack = []
+
+        for attack_path, index in self.evaluated_attacks:
+            for _ in range(len(attack_path)-1):
+                attacker = board.get_area(attack_path[0])
+                target = board.get_area(attack_path[1])
+                if attacker.get_owner_name() == self.player_name and target.get_owner_name() != self.player_name and attacker.can_attack():
+                    # This if is used for learning procces. 
+                    # TODO Comment out
+                    # if np.random.random(1) < lr:
+                    #     self.last_attack = [self.ucs.create_datapoint(attack_path[0], attack_path[1], board), attack_path[1]]
+                    attack_path.pop(0)
+                    if len(attack_path) == 1:
+                        self.evaluated_attacks.remove([attack_path, index])
+                    return BattleCommand(attacker.get_name(), target.get_name())
+                else:
+                    self.evaluated_attacks.remove([attack_path, index])
+            
+        print("\n{}. turn took {}s".format(nb_turns_this_game, time.perf_counter() - self.time_start), end="")
+        return EndTurnCommand()
+
+
+    def evaluate_strategy(self, board, nb_turns_this_game, time_left, threshold_for_attacking=0.5):
+        self.evaluated_attacks = {}
+        evaluated_datapoints = {}
         tree = TreeSearch(self.player_name)
+        restrict = self.get_depth_restriction(time_left)
         start = time.perf_counter()
 
+        cached = 0
+        uncached = 0
 
         attacks = possible_attacks(board, self.player_name)
         attackers = list(set([source for source, _ in attacks]))
 
         for source in attackers:
-            paths = tree.get_paths(source, board)
-
-            for path in paths:
+            paths = tree.get_paths(source, restrict, board)
+            for p, path in enumerate(paths):
                 path_index = 0
                 board_copy = copy.deepcopy(board)
                 for i in range(len(path)-1):
-                    res = self.ucs.evaluate_attack(path[i], path[i+1], board)
+                    dp = self.ucs.create_datapoint(path[i], path[i+1], board_copy)
+                    if tuple(dp) in evaluated_datapoints:
+                        res = evaluated_datapoints[tuple(dp)]
+                        cached += 1
+                    else:
+                        res = self.ucs.evaluate_attack(copy.deepcopy(dp), board)
+                        evaluated_datapoints[tuple(dp)] = res
+                        uncached += 1
+                    
                     if res > threshold_for_attacking:
                         path_index += res
-                        evaluated_attacks[tuple(path[i:i+2])] = path_index / i+1
+                        self.evaluated_attacks[tuple(path[i:i+2])] = path_index / (i+1)
                         self.ucs.simulate_attacks(path[i], path[i+1], board_copy)
                     else:
                         break
         
-        evaluated_attacks = sorted(evaluated_attacks.items(), key=lambda x: x[1], reverse=True)
-        print("{} turn. Evaluated in {}".format(nb_turns_this_game, time.perf_counter() - start))
-
-        return EndTurnCommand()
-        
-
+        self.evaluated_attacks = sorted(self.evaluated_attacks.items(), key=lambda x: x[1], reverse=True)
+        self.evaluated_attacks = [[list(path), index] for path, index in self.evaluated_attacks]
+        # print("{}. turn evaluated strategy in {}s".format(nb_turns_this_game, time.perf_counter() - start))
+        # print(f'evaluations: cached = {cached}, uncached = {uncached}')
 
 
-
-        province_attacks = tree.evaluate_possible_paths(board, self.player_name, 10)
-        # print(province_attacks.items())
-
-        print("got paths in", time.perf_counter() - start)
-        #sorted dict descending
-        province_attacks = sorted(province_attacks.items(), key=lambda x: x[1], reverse=True)
-        print("sorted paths in", time.perf_counter() - start)
-
-        print(f'length of attacks = {len(province_attacks)}')
-        i_tmp = 0
-
-        # for every province that is able to attack someone (provinces sorted descending)
-        for province, n_attacks in province_attacks:
-            i_tmp += 1
-            print(f'i = {i_tmp}')
-            paths = tree.get_paths_of(province, board.get_area(province).get_dice())
-            print(type(paths))
-            print(paths.shape)
-            print(paths)
-
-            paths = np.unique(paths, axis=0)
-            print("passed unique()")
-
-            # for every possible path of attack from single province
-            for path in paths:
-                boardcopy = copy.deepcopy(board)
-                last_result = 0
-
-                # indexing throught the path of single attack
-                for i in range(len(path) - 1):
-                    """ takes cumulatively whole attack path and evaluates each attack
-                        for each attack which is good enough is created "simulation" and board is modified
-                        results are calculated as aritmethic mean and stored in dictionary
-                    """
-                    result = self.ucs.evaluate_attack(path[i], path[i+1], board)
-                    if result > threshold_for_attacking:
-                        last_result += result
-                        boardcopy = self.ucs.simulate_attacks([[path[i], path[i+1]]], boardcopy)
-                        evaluated_attacks[tuple([x for x in path[:i+2]])] = last_result / (i + 1)
-                    else:
-                        # In case of no good attack 
-                        # current attack path is stored and rest of path is not evaluated 
-                        break
-
-        print("evaluated paths in", time.perf_counter() - start)
-        del tree
-        return EndTurnCommand()
-
-
-        evaluated_attacks = sorted(evaluated_attacks.items(), key=lambda x: x[1], reverse=True)
-        print("sorted best attack paths in", time.perf_counter() - start)
-        for path, result in evaluated_attacks:
-            print(path, result)
-        
-
-        return EndTurnCommand()
+    def get_depth_restriction(self, time_left):
+        if time_left < 1:
+            return 5
+        elif time_left < 2:
+            return 3
+        elif time_left < 5:
+            return 2
+        elif time_left < 7:
+            return 1
+        else:
+            return 0    
+    

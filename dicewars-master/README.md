@@ -71,7 +71,7 @@ Additionally exposes these options:
 
 An example:
 
-    python3 ./scripts/dicewars-ai-only.py -r -b 11 -o 22 -s 33 -c 44 -n 10 -l ../logs --ai dt.stei xlogin42
+    python3 ./scripts/dicewars-ai-only.py -r -b 11 -o 22 -s 33 -c 44 -n 10 -l ./results --ai dt.stei xlogin42
 
 ### Running a tournament
 Keeps picking a subset of AIs of specified size and has them play together.

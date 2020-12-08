@@ -1,5 +1,3 @@
-from dicewars.ai.sui_ai.TreeNode import TreeNode
-import numpy as np
 import copy
 
 class TreeSearch():
@@ -12,9 +10,9 @@ class TreeSearch():
 		self.paths = []
 		self.player_name = player_name
 
-	def get_paths(self, area, board):
+	def get_paths(self, area, depth_restrict, board):
 		self.paths = []
-		self.expand_node(area.get_dice(), area, board, cur_path=[])
+		self.expand_node(area.get_dice() - depth_restrict, area, board, cur_path=[])
 		return self.paths
 
 

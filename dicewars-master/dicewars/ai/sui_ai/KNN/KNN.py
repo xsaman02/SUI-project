@@ -66,11 +66,10 @@ class KNN():
 	def evaluate(self, datapoint):
 
 		n_dp = self.__normalize(datapoint)
-		datapoints = self.__get_k_neighbors(n_dp)
-		classes = np.array([self.__get_class_of_datapoint(dp) for dp in datapoints])
+		neigbours = self.__get_k_neighbors(n_dp)
+		classes = np.array([self.__get_class_of_datapoint(dp) for dp in neigbours])
 
-		pos = sum(classes)
-		return pos / len(classes)
+		return np.array(classes).mean()
 
 	def set_new_datapoint(self, data, y) -> None:
 		"""	Function adds new data (vector of features) to the dataset and marked it by class y (0, 1)
@@ -80,10 +79,11 @@ class KNN():
 			data (numpy.array): vector of features
 			y (bool | int): class
 		"""
-		assert(self.dataset.size != 0)
+
 		data = self.__normalize(data)
 		self.dataset = np.append(self.dataset, [data], axis=0)
-		self.hashtable[tuple(data)] = int(y)
+		self.hashtable[tuple(data)] = y
+		# print("dataset shape = ", self.dataset.shape)
 
 
 	def __get_k_neighbors(self, dp):
@@ -124,31 +124,13 @@ class KNN():
 
 
 if __name__ == "__main__":
-	import time
-	from math import dist
-
-
-	dps = np.random.random((100000, 4))
-	dp = np.random.random(4)
-	start_new = time.perf_counter()
-	t = []
-	np.linalg.norm(dps - dp, axis=1)
-	end_new = time.perf_counter()
-	# print("old evaluation way: ", np.asarray(t).mean())
-	print("whole evaluation on 100000 samples cost: ", end_new-start_new, "s")
-
-	# start_new = time.perf_counter()
-	t = []
-	for _ in range(100000):
-		dps = np.random.random((4, 2))
-		start = time.perf_counter()
-		prob = dist(dps[0], dps[1])
-		stop = time.perf_counter()
-		t.append(stop-start)
-	# end_new = time.perf_counter()
-	# print("new evaluation way: ", np.asarray(t).mean())
-	print("whole evaluation on 100000 samples cost: ", sum(t), "s")
-
+	d = {"probability of capture" : [0, 1], 
+		"change of biggest region size after attack" : [0,15], 
+		"mean dice of enemy terrs. of target" : [0, 8], 
+		"mean dice of enemy terrs. of source" : [1, 8]}
+	knn = KNN(11, list(d.values()), np.array([1, 1.1, 1.2, 1.2]))
+	knn.initialize(10, len(d.keys()))
+	knn.save_dataset()
 
 
 
