@@ -129,7 +129,7 @@ if __name__ == "__main__":
 		"mean dice of enemy terrs. of target" : [0, 8], 
 		"mean dice of enemy terrs. of source" : [1, 8]}
 	knn = KNN(11, list(d.values()), np.array([1, 1.1, 1.2, 1.2]))
-	knn.initialize(10, len(d.keys()))
+	knn.initialize(100, len(d.keys()))
 	knn.save_dataset()
 
 
