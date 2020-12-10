@@ -147,7 +147,56 @@ if __name__ == "__main__":
 		"mean dice of enemy terrs. of source" : [1, 8]}
 	knn = KNN(11, list(d.values()), np.array([1, 1.1, 1.2, 1.2]))
 	# Set new dataset with given number of datapoint
-	knn.initialize(100, len(d.keys()))
-	knn.save_dataset()
+	# knn.initialize(100, len(d.keys()))
+	# knn.save_dataset()
 
+
+	
+	
+	knn.load_dataset()
+	hashtable = knn.hashtable
+	from mpl_toolkits import mplot3d
+	from matplotlib import pyplot as plt
+
+	arr_zero = []
+	arr_half = []
+	arr_full = []
+	for dp, val in hashtable.items():
+		if val == 0:
+			arr_zero.append(dp)
+		elif val == 0.5:
+			arr_half.append(dp)
+		else:
+			arr_full.append(dp)
+
+	print("lenghts: zeros: {}, half: {}, ones: {}".format(arr_zero, arr_half, arr_full))
+
+	x_zero = [x[0] for x in arr_zero]
+	x_half = [x[0] for x in arr_half]
+	x_full = [x[0] for x in arr_full]
+
+	y_zero = [y[2] for y in arr_zero]
+	y_half = [y[2] for y in arr_half]
+	y_full = [y[2] for y in arr_full]
+
+	z_zero = [z[3] for z in arr_zero]
+	z_half = [z[3] for z in arr_half]
+	z_full = [z[3] for z in arr_full]
+
+
+	# Creating figure
+	fig = plt.figure(figsize = (10, 7))
+	ax = plt.axes(projection ="3d")
+	plt.xlabel("prob. to conquer")
+	plt.ylabel("enemy dice mean of target")
+	# plt.zlabel("enemy dice mean of source")
+
+	# Creating plot
+	ax.scatter3D(x_zero, y_zero, z_zero, color = "red")
+	ax.scatter3D(x_half, y_half, z_half, color = "orange")
+	ax.scatter3D(x_full, y_full, z_full, color = "green")
+
+
+	# show plot
+	plt.show()
 

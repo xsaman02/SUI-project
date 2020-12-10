@@ -30,7 +30,7 @@ class AI:
         d = {"probability of capture" : [0, 1], 
 		     "change of biggest region size after attack" : [0,15], 
 		     "mean dice of enemy terrs. of target" : [0, 8], 
-		     "mean dice of enemy terrs. of source" : [1, 8]}
+		     "mean dice of enemy terrs. of source" : [0, 8]}
         #Initialization of KNN classifier
         knn = KNN(11, list(d.values()), np.array([1, 1.2, 1.3, 1.3]))
         knn.load_dataset()
@@ -42,6 +42,8 @@ class AI:
         self.last_turn_attacks = {}
         # [(datapoint), target_id]
         self.last_attack = []
+        self.conquered_provinces = {}
+        self.last_move = []
         self.time_start = 0
 
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
@@ -67,9 +69,13 @@ class AI:
                 if attacker.get_owner_name() == self.player_name and target.get_owner_name() != self.player_name and attacker.can_attack():
                     # TODO Comment out
                     # # This if is used for learning process. 
-                    # if np.random.random(1) < lr:
-                    #     self.last_attack = [self.ucs.create_datapoint(attack_path[0], attack_path[1], board), attack_path[1]]
+                    if np.random.random(1) < lr:
+                        self.last_attack = [self.ucs.create_datapoint(attack_path[0], attack_path[1], board), attack_path[1]]
                     
+                    if self.last_move != [] and board.get_area(self.last_move[1]).get_owner_name() == self.player_name:
+                        self.conquered_provinces[self.last_move[1]] = self.last_move[0]
+                    
+                    self.last_move = attack_path[:2]
                     #Poping attacker from path
                     #Example -> [12, 23, 2] -> [23, 2]
                     attack_path.pop(0)
@@ -78,11 +84,26 @@ class AI:
                         self.evaluated_attacks.remove([attack_path, index])
                     return BattleCommand(attacker.get_name(), target.get_name())
                 else:
-                    attack_path.pop(0)
-                    if len(attack_path) == 1:
+                    # If attack from last move was succesfull -> save it
+                    if self.last_move != [] and board.get_area(self.last_move[1]).get_owner_name() == self.player_name:
+                        self.conquered_provinces[self.last_move[1]] = self.last_move[0]
+                    self.last_move = []
+
+                    # conquerer of province is same as attacker
+                    if attack_path[1] in self.conquered_provinces and attack_path[0] == self.conquered_provinces[attack_path[1]]:
+                        attack_path.pop(0)
+                        if len(attack_path) == 1:
+                            self.evaluated_attacks.remove([attack_path, index])
+                            break
+                    else:
+                        # if conquerer != attacker -> remove attack path from list
                         self.evaluated_attacks.remove([attack_path, index])
-            
+                        break
+
+
         # print("{}. turn took {:.3f}s".format(nb_turns_this_game, time.perf_counter() - self.time_start),end="\n")
+        self.last_move = []
+        self.conquered_provinces = {}
         return EndTurnCommand()
 
 
