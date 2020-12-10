@@ -41,8 +41,8 @@ def signal_handler(signum, frame):
 
 PLAYING_AIs = [
     'dt.rand',
-    'dt.sdc',
-    'dt.ste',
+    # 'dt.sdc',
+    # 'dt.ste',
     # 'dt.stei',
     # 'dt.wpm_d',
     # 'dt.wpm_s',

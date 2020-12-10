@@ -63,9 +63,20 @@ class KNN():
 			writer = csv.writer(fd)
 			writer.writerows(self.hashtable.items())
 
-	def evaluate(self, datapoint):
+	def evaluate(self, dp):
+		""" Evaluates given datapoint 
+			and returns mean from K nearest neigbours in dataset
 
-		n_dp = self.__normalize(datapoint)
+		Args:
+		-----
+			dp (np.ndarray): vector of features
+
+		Returns:
+		--------
+			float : mean of K nearest neigbours in dataset
+		"""
+
+		n_dp = self.__normalize(dp)
 		neigbours = self.__get_k_neighbors(n_dp)
 		classes = np.array([self.__get_class_of_datapoint(dp) for dp in neigbours])
 
@@ -87,6 +98,16 @@ class KNN():
 
 
 	def __get_k_neighbors(self, dp):
+		""" Gets K nearest neigbours in dataset to given dp
+
+		Args:
+		-----
+			dp (np.ndarray): datapoint
+
+		Returns:
+		--------
+			np.ndarray: 2D-matrix - K nearest neigbours
+		"""
 		lens = np.linalg.norm(self.dataset - dp, axis=1)
 		indecies = np.argsort(lens)[:self.k]
 		return self.dataset[indecies]
@@ -116,52 +137,17 @@ class KNN():
 	def get_len_of_dataset(self) -> int:
 		return self.dataset.shape[0]
 
-	def create_new_dataset(self) -> None:
-		self.save_dataset()
-		self.dataset_index += 1
-		self.initialize(100, len(self.min_max))
-
-
 
 if __name__ == "__main__":
+	"""	Execute this program in case of need to initialize new dataset. 
+	"""
 	d = {"probability of capture" : [0, 1], 
 		"change of biggest region size after attack" : [0,15], 
 		"mean dice of enemy terrs. of target" : [0, 8], 
 		"mean dice of enemy terrs. of source" : [1, 8]}
 	knn = KNN(11, list(d.values()), np.array([1, 1.1, 1.2, 1.2]))
+	# Set new dataset with given number of datapoint
 	knn.initialize(100, len(d.keys()))
 	knn.save_dataset()
-
-
-
-
-
-
-
-	# d = {"probability of capture" : [0, 1], 
-	# 	 "change of biggest region size after attack" : [0,15], 
-	# 	 "mean dice of enemy terrs. of target" : [1, 8], 
-	# 	 "attacker dice" : [1, 8]}
-	# knn = KNN(11, list(d.values()), np.array([1, 1.2, 1.4, 1.5]))
-	# knn.initialize(1000, len(d.keys()))
-	# dp = np.array([0.5,7.5,4.5,4.5])
-
-	# knn.set_new_datapoint(, False)
-	# knn.save_dataset()
-	# exit(0)
-	# knn.load_dataset()
-
-	# start_old = time.perf_counter()
-	# t = []
-	# for _ in range(10000):
-	# 	dp = np.random.random(4)
-	# 	start = time.perf_counter()
-	# 	prob = knn.evaluate(dp)
-	# 	stop = time.perf_counter()
-	# 	t.append(stop-start)
-	# end_old = time.perf_counter()
-	# print("old evaluation way: ", np.asarray(t).mean())
-	# print("whole evaluation on 10000 samples cost: ", end_old-start_old, "s")
-
 
 
