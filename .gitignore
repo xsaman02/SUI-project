@@ -3,3 +3,4 @@ env-sui/
 dicewars-master/scripts/utils.py
 dicewars-master/debug.save
 path.sh
+dicewars-master/dicewars/ai/template2.py

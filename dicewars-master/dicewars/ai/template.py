@@ -48,7 +48,7 @@ class AI:
 
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
         # TO CHANGE - learning rate
-        lr = 0.02
+        lr = 0.05
 
         # If it's first move this turn -> Evaluate new strategy & propagade_results  from last turn
         if nb_moves_this_turn == 0:
@@ -69,8 +69,8 @@ class AI:
                 if attacker.get_owner_name() == self.player_name and target.get_owner_name() != self.player_name and attacker.can_attack():
                     # TODO Comment out
                     # # This if is used for learning process. 
-                    if np.random.random(1) < lr:
-                        self.last_attack = [self.ucs.create_datapoint(attack_path[0], attack_path[1], board), attack_path[1]]
+                    # if np.random.random(1) < lr:
+                    #     self.last_attack = [self.ucs.create_datapoint(attack_path[0], attack_path[1], board), attack_path[1]]
                     
                     if self.last_move != [] and board.get_area(self.last_move[1]).get_owner_name() == self.player_name:
                         self.conquered_provinces[self.last_move[1]] = self.last_move[0]
@@ -101,7 +101,7 @@ class AI:
                         break
 
 
-        # print("{}. turn took {:.3f}s".format(nb_turns_this_game, time.perf_counter() - self.time_start),end="\n")
+        print("{}. turn took {:.3f}s".format(nb_turns_this_game, time.perf_counter() - self.time_start),end="\n")
         self.last_move = []
         self.conquered_provinces = {}
         return EndTurnCommand()

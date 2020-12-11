@@ -146,11 +146,14 @@ if __name__ == "__main__":
 		"mean dice of enemy terrs. of target" : [0, 8], 
 		"mean dice of enemy terrs. of source" : [1, 8]}
 	knn = KNN(11, list(d.values()), np.array([1, 1.1, 1.2, 1.2]))
+
+	
+	
 	# Set new dataset with given number of datapoint
-	# knn.initialize(100, len(d.keys()))
-	# knn.save_dataset()
+	knn.initialize(100, len(d.keys()))
+	knn.save_dataset()
 
-
+	exit(0)
 	
 	
 	knn.load_dataset()

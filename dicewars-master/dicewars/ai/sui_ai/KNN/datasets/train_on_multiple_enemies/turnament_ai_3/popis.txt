@@ -1,0 +1,5 @@
+.        .     % winrate [ .  / .  ] dt.rand xlogin42 xlogin00 template
+xlogin42 60.00 % winrate [ 6  / 10 ] nan/0   60.0/10  nan/0    60.0/10 
+template 56.67 % winrate [ 17 / 30 ] 50.0/10 40.0/10  80.0/10  56.7/30 
+dt.rand  50.00 % winrate [ 5  / 10 ] 50.0/10 nan/0    nan/0    50.0/10 
+xlogin00 20.00 % winrate [ 2  / 10 ] nan/0   nan/0    20.0/10  20.0/10 
