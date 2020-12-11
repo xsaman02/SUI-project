@@ -3,7 +3,7 @@ import numpy as np
 
 from dicewars.ai.utils import possible_attacks
 from dicewars.client.ai_driver import BattleCommand, EndTurnCommand
-from dicewars.ai.sui_ai.TreeSearch import TreeSearch
+from dicewars.ai.sui_ai.UCS.TreeSearch import TreeSearch
 from dicewars.ai.sui_ai.KNN.KNN import KNN
 from dicewars.ai.sui_ai.UCS.UCS import UCS
 

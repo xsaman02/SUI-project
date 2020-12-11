@@ -1,7 +1,6 @@
 import copy
 import numpy as np
-from dicewars.ai.utils import possible_attacks, probability_of_successful_attack
-from dicewars.ai.sui_ai.UCS.Attack_struct import Attack
+from dicewars.ai.utils import probability_of_successful_attack
 
 
 class UCS():
@@ -9,9 +8,6 @@ class UCS():
 	Uniform cost search for searching best possible way to attack,
 	simulating attacks and searching fields
 	"""
-
-	boardcopy = None
-	max_dataset_length = 500
 
 	def __init__(self, player_name, KNN) -> None:
 		self.player_name = player_name
@@ -140,8 +136,14 @@ class UCS():
 		return self.knn.evaluate(dp)
 
 	def propagade_results(self, board, attacks):
-		# if self.knn.get_len_of_dataset() >= self.max_dataset_length:
-		# 	self.knn.create_new_dataset()
+		""" Is used for training purpuses
+			Takes saved attacks from last turn and store them into dataset based on results of an attacks
+
+		Args:
+		-----
+			board (Board): Game board
+			attacks ([target_id, [datapoint, value_of_attack]]): Stored attacks
+		"""
 
 		if attacks != {}:
 			for target, value in attacks.items():
