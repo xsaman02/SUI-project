@@ -28,11 +28,11 @@ class AI:
         self.logger = logging.getLogger('AI')
 
         d = {"probability of capture" : [0, 1], 
-		     "change of biggest region size after attack" : [0,15], 
+		     "change of biggest region size after attack" : [0,8], 
 		     "mean dice of enemy terrs. of target" : [0, 8], 
 		     "mean dice of enemy terrs. of source" : [0, 8]}
         #Initialization of KNN classifier
-        knn = KNN(11, list(d.values()), np.array([1, 1.2, 1.3, 1.3]))
+        knn = KNN(11, list(d.values()), np.array([1, 1, 1, 1]))
         knn.load_dataset()
         #Inicialization of UCS algoritm
         self.ucs = UCS(player_name, knn)
@@ -48,7 +48,7 @@ class AI:
 
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
         # TO CHANGE - learning rate
-        lr = 0.05
+        lr = 0.03
 
         # If it's first move this turn -> Evaluate new strategy & propagade_results  from last turn
         if nb_moves_this_turn == 0:
@@ -101,7 +101,7 @@ class AI:
                         break
 
 
-        print("{}. turn took {:.3f}s".format(nb_turns_this_game, time.perf_counter() - self.time_start),end="\n")
+        # print("{}. turn took {:.3f}s, with time left {}".format(nb_turns_this_game, time.perf_counter() - self.time_start, time_left),end="\n")
         self.last_move = []
         self.conquered_provinces = {}
         return EndTurnCommand()

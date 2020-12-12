@@ -1,5 +1,0 @@
-Porovnané s datasety:
-	xlogin42
-	rand
-
-v obou případech znatelně lepší

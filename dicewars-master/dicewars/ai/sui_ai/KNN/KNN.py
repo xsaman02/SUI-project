@@ -142,16 +142,22 @@ if __name__ == "__main__":
 	"""	Execute this program in case of need to initialize new dataset. 
 	"""
 	d = {"probability of capture" : [0, 1], 
-		"change of biggest region size after attack" : [0,15], 
+		"change of biggest region size after attack" : [0,8], 
 		"mean dice of enemy terrs. of target" : [0, 8], 
 		"mean dice of enemy terrs. of source" : [1, 8]}
-	knn = KNN(11, list(d.values()), np.array([1, 1.1, 1.2, 1.2]))
+	knn = KNN(11, list(d.values()), np.array([1, 1, 1, 1]))
 
 	
 	
 	# Set new dataset with given number of datapoint
 	knn.initialize(100, len(d.keys()))
 	knn.save_dataset()
+
+	# knn.load_dataset()
+	# knn.set_new_datapoint(np.array([0.45, 1, 0, 1]), 1)
+	# knn.set_new_datapoint(np.array([0.46, 1, 0, 1]), 1)
+	# knn.save_dataset()
+
 
 	exit(0)
 	
