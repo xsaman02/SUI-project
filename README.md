@@ -6,5 +6,8 @@ authors:
 Šamánek Jan (xsaman02), Stojan Radomír (xstoja07), Freyburg Petr (xfreyb00)
 
 description of branch:
-This branch **development** is primaly used for developing and creating final production application, which will be then pulled to the master branch.
-For purpuses of trying new ideas and testing please use another branch.
+This branch **master** is used for commiting final product. 
+```diff
+- it's not meant to be used for development nor testing.
+```
+For purposes of development and testing please use another branch.
