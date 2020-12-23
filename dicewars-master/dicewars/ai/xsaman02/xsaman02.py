@@ -3,29 +3,19 @@ import numpy as np
 
 from dicewars.ai.utils import possible_attacks
 from dicewars.client.ai_driver import BattleCommand, EndTurnCommand
-from dicewars.ai.sui_ai.UCS.TreeSearch import TreeSearch
-from dicewars.ai.sui_ai.KNN.KNN import KNN
-from dicewars.ai.sui_ai.UCS.UCS import UCS
-
-"""
-Věci které se mohou měnit.
- - V KNN.py lze měnit počet počátečních bodů v novém datasetu
- - Proměná "lr" na řádku 49, která určuje learning rate z her
- - Parametr funkce evaluate_strategy, který se jmenuje threshold_for_attacking
- - Samozřejmě počet a druhy inteligencí, na kterých se inteligence trénuje
- - Počet bodů v datasetu na který trénovat (overfitting se kdyžtak může zmírnit snížením lr)
-
- - Na změně v algoritmu nebo prostoru v KNN by jsme se měli domluvit společně
-
-Poznámka: V programu dicewars-tournament.py lze specifikovat, které umělé inteligence mají hrát v turnamentu
-    řádek 42
-"""
-
+from dicewars.ai.xsaman02.UCS.TreeSearch import TreeSearch
+from dicewars.ai.xsaman02.KNN.KNN import KNN
+from dicewars.ai.xsaman02.UCS.UCS import UCS
 
 class AI:
+    """
+    AI using Tree search for finding possible attack paths 
+    and evaluating them using KNN klassifier
+    """
+    
     def __init__(self, player_name, board, players_order):
         self.player_name = player_name
-        self.logger = logging.getLogger('AI')
+        # self.logger = logging.getLogger('AI')
 
         d = {"probability of capture" : [0, 1], 
 		     "change of biggest region size after attack" : [0,8], 
@@ -46,7 +36,10 @@ class AI:
         self.last_move = []
         self.time_start = 0
 
+        self.tmp_mean_time = []
+
     def ai_turn(self, board, nb_moves_this_turn, nb_turns_this_game, time_left):
+
         # TO CHANGE - learning rate
         lr = 0.03
 
@@ -100,10 +93,12 @@ class AI:
                         self.evaluated_attacks.remove([attack_path, index])
                         break
 
-
+        
         # print("{}. turn took {:.3f}s, with time left {}".format(nb_turns_this_game, time.perf_counter() - self.time_start, time_left),end="\n")
         self.last_move = []
         self.conquered_provinces = {}
+        self.tmp_mean_time.append(time.perf_counter() - self.time_start)
+
         return EndTurnCommand()
 
 

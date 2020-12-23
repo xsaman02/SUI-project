@@ -1,15 +1,13 @@
-from os import write
 from typing import Iterator, List
 import numpy as np
-import json, math, csv
-from hashlib import sha1
+import csv
 
 
 
 class KNN():
 	
-	dataset_addr = "./dicewars/ai/sui_ai/KNN/datapoints"
-	hashtable_addr = "./dicewars/ai/sui_ai/KNN/hashtable"
+	dataset_addr = "./dicewars/ai/xsaman02/KNN/datapoints"
+	hashtable_addr = "./dicewars/ai/xsaman02/KNN/hashtable"
 	dataset_index = 0
 	dataset = np.asarray([])
 	hashtable = {}
