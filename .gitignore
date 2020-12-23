@@ -1,2 +1,8 @@
 .vscode/settings.json
 env-sui/
+README.md
+__pycache__/
+.vscode
+dicewars-master/~WRL0005.tmp
+dicewars-master/debug.save
+dicewars-master/documentace.odt
