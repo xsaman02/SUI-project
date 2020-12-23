@@ -43,12 +43,13 @@ PLAYING_AIs = [
     'dt.rand',
     'dt.sdc',
     'dt.ste',
-    # 'dt.stei',
-    # 'dt.wpm_d',
-    # 'dt.wpm_s',
+    'dt.stei',
+    'dt.wpm_d',
+    'dt.wpm_s',
     'dt.wpm_c',
-    # 'xlogin42',
+    'xlogin42',
     'xlogin00',
+    'xsaman02'
 ]
 UNIVERSAL_SEED = 42
 
@@ -59,7 +60,8 @@ def board_definitions(initial_board_seed):
     board_seed = initial_board_seed
     while True:
         yield BoardDefinition(board_seed, UNIVERSAL_SEED, UNIVERSAL_SEED)
-        board_seed += 1
+        if board_seed is not None:
+            board_seed += 1
 
 
 def full_permunations_generator(players):

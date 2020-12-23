@@ -1,8 +1,15 @@
 .vscode/settings.json
 env-sui/
+dicewars-master/scripts/utils.py
+dicewars-master/debug.save
+dicewars-master/dicewars/ai/template2.py
+.vscode/settings.json
+env-sui/
 README.md
 __pycache__/
 .vscode
 dicewars-master/~WRL0005.tmp
 dicewars-master/debug.save
 dicewars-master/documentace.odt
+dicewars-master/~$cumentace.odt
+dicewars-master/~WRL0005.tmp
